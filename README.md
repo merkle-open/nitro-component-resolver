@@ -1,2 +1,7 @@
-# node-modules
-Testing Node Modules
+# nitro-pattern-resolver
+
+A helper to resolve and parse the nitro pattern structure and meta files.
+
+## State
+
+ALPHA
