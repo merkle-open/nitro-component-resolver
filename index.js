@@ -8,8 +8,8 @@ var assert = require('assert');
 var path = require('path');
 var HotFileCache = require('hot-file-cache');
 
-module.exports = function ComponentDataExtractor(options) {
-  assert(typeof options === 'object' && options.rootDirectory, 'root directory not specified');
+module.exports = function NitroPatternResolver(options) {
+  assert(typeof options === 'object' && options.rootDirectory, 'rootDirectory not specified');
   // Defaults
   options = _.extend ({
     examples: false,
@@ -18,7 +18,7 @@ module.exports = function ComponentDataExtractor(options) {
   }, options);
 
   var patternFiles = new HotFileCache('*/*/pattern.json', {
-    cwd: rootDirectory,
+    cwd: options.rootDirectory,
     fileProcessor: patternJsonProcessor
   });
 
@@ -26,7 +26,7 @@ module.exports = function ComponentDataExtractor(options) {
   var exampleFiles;
   if (options.examples) {
     exampleFiles = new HotFileCache('*/*/' + options.exampleFolderName + '/*.*', {
-      cwd: rootDirectory,
+      cwd: options.rootDirectory,
       fileProcessor: exampleTemplateProcessor
     });
    }
@@ -39,9 +39,9 @@ module.exports = function ComponentDataExtractor(options) {
     try {
       data = JSON.parse(fileContent.toString());
     } catch (e) {
-      throw new Error('Failed to parse "' + file + '" ' + e);
+      throw new Error('Failed to parse "' + filepath + '" ' + e);
     }
-    var componentPath = path.dirname(path.relative(rootDirectory, filepath)).replace(/\\/g, '/');
+    var componentPath = path.dirname(path.relative(options.rootDirectory, filepath)).replace(/\\/g, '/');
     var componentPathParts = componentPath.split('/');
     return {
       metaFile: filepath,
@@ -109,7 +109,7 @@ module.exports = function ComponentDataExtractor(options) {
     if (!options.examples) {
       throw new Error('pattern resolver: examples are deactivated');
     }
-    var exampleDirectory = path.join(componentDirectory, exampleFolderName);
+    var exampleDirectory = path.join(componentDirectory, options.exampleFolderName);
     // filter all examples for files which are in the example path
     return exampleFiles.getFiles().then(function(filenames) {
       return Promise.all(_.sortedUniq(filenames)
