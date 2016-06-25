@@ -7,12 +7,20 @@ var _ = require('lodash');
 var assert = require('assert');
 var path = require('path');
 var HotFileCache = require('hot-file-cache');
+var marked = require('marked');
+var highlightJs = require('highlight.js');
+marked.setOptions({
+  highlight: function (code) {
+    return highlightJs.highlightAuto(code).value;
+  }
+});
 
 module.exports = function NitroPatternResolver(options) {
   assert(typeof options === 'object' && options.rootDirectory, 'rootDirectory not specified');
   // Defaults
   options = _.extend ({
     examples: false,
+    readme: true,
     exampleFolderName: '_example',
     patternExpression: '*/*/pattern.json'
   }, options);
@@ -29,6 +37,15 @@ module.exports = function NitroPatternResolver(options) {
       cwd: options.rootDirectory,
       fileProcessor: exampleTemplateProcessor
     });
+   }
+
+   // Readme files
+   var readmeFiles;
+   if (options.readme) {
+    readmeFiles = new HotFileCache('*/*/readme.md', {
+       cwd: options.rootDirectory,
+       fileProcessor: readmeProcessor
+     });
    }
 
   /**
@@ -62,6 +79,15 @@ module.exports = function NitroPatternResolver(options) {
       filename: filepath,
       content: fileContent.toString()
     };
+  }
+
+  /**
+   * Process the readme files when load into the file cache
+   */
+  function readmeProcessor(filepath, fileContent) {
+    return new Promise((resolve, reject) => marked(fileContent.toString(), function(err, result) {
+      return err ? reject(err) : resolve(result);
+    }));
   }
 
   /**
@@ -100,6 +126,22 @@ module.exports = function NitroPatternResolver(options) {
       }
       return components[componentPath];
     });
+  };
+
+  /**
+   * Returns the html of the parsed readme markdown
+   */
+  this.getComponentReadme = function getComponentReadme(componentPath) {
+    if (!options.readme) {
+      throw new Error('pattern resolver: readmes are deactivated');
+    }
+    var readmePath = path.join(componentPath, 'readme.md');
+    return readmeFiles.fileExists(readmePath)
+      .then(function(exists) {
+        if (exists) {
+          return readmeFiles.readFile(readmePath);
+        }
+      });
   };
 
   /**
