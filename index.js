@@ -17,7 +17,7 @@ module.exports = function NitroPatternResolver(options) {
     patternExpression: '*/*/pattern.json'
   }, options);
 
-  var patternFiles = new HotFileCache('*/*/pattern.json', {
+  var patternFiles = new HotFileCache(options.patternExpression, {
     cwd: options.rootDirectory,
     fileProcessor: patternJsonProcessor
   });
