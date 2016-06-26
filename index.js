@@ -7,13 +7,6 @@ var _ = require('lodash');
 var assert = require('assert');
 var path = require('path');
 var HotFileCache = require('hot-file-cache');
-var marked = require('marked');
-var highlightJs = require('highlight.js');
-marked.setOptions({
-  highlight: function (code) {
-    return highlightJs.highlightAuto(code).value;
-  }
-});
 
 module.exports = function NitroPatternResolver(options) {
   assert(typeof options === 'object' && options.rootDirectory, 'rootDirectory not specified');
@@ -22,12 +15,35 @@ module.exports = function NitroPatternResolver(options) {
     examples: false,
     readme: true,
     exampleFolderName: '_example',
-    patternExpression: '*/*/pattern.json'
+    patternExpression: '*/*/pattern.json',
+    // Optional renderer
+    exampleRenderer: (renderData) => renderData.content,
+    readmeRenderer: (renderData) => renderData.content,
   }, options);
 
   var patternFiles = new HotFileCache(options.patternExpression, {
     cwd: options.rootDirectory,
-    fileProcessor: patternJsonProcessor
+    /**
+     * Process the pattern.json files when load into the file cache
+     */
+    fileProcessor: (filepath, fileContent) => {
+      var data;
+      try {
+        data = JSON.parse(fileContent.toString());
+      } catch (e) {
+        throw new Error('Failed to parse "' + filepath + '" ' + e);
+      }
+      var componentPath = path.dirname(path.relative(options.rootDirectory, filepath)).replace(/\\/g, '/');
+      var componentPathParts = componentPath.split('/');
+      return {
+        metaFile: filepath,
+        directory: path.dirname(filepath),
+        path: componentPath,
+        type: componentPathParts[0],
+        name: componentPathParts[1],
+        data: data
+      }
+    }
   });
 
   // Search for examples inside the project
@@ -35,7 +51,23 @@ module.exports = function NitroPatternResolver(options) {
   if (options.examples) {
     exampleFiles = new HotFileCache('*/*/' + options.exampleFolderName + '/*.*', {
       cwd: options.rootDirectory,
-      fileProcessor: exampleTemplateProcessor
+      /**
+       * Process the examle files when load into the file cache
+       */
+      fileProcessor: (filepath, fileContent) => {
+        var exampleName = path.basename(filepath).replace(/\..+$/, '');
+        return Promise.resolve(options.exampleRenderer({
+          filepath: filepath,
+          content: fileContent.toString(),
+          exampleName: exampleName,
+          resolver: this
+        }))
+        .then((content) =>({
+          name: exampleName,
+          filename: filepath,
+          content: content
+        }));
+      }
     });
    }
 
@@ -44,51 +76,18 @@ module.exports = function NitroPatternResolver(options) {
    if (options.readme) {
     readmeFiles = new HotFileCache('*/*/readme.md', {
        cwd: options.rootDirectory,
-       fileProcessor: readmeProcessor
+       /**
+        * Process the readme.md files when load into the file cache
+        */
+       fileProcessor: (filepath, fileContent) => {
+         return Promise.resolve(options.readmeRenderer({
+           filepath: filepath,
+           content: fileContent.toString(),
+           resolver: this
+         }));
+       }
      });
    }
-
-  /**
-   * Process the pattern.json files when load into the file cache
-   */
-  function patternJsonProcessor(filepath, fileContent) {
-    var data;
-    try {
-      data = JSON.parse(fileContent.toString());
-    } catch (e) {
-      throw new Error('Failed to parse "' + filepath + '" ' + e);
-    }
-    var componentPath = path.dirname(path.relative(options.rootDirectory, filepath)).replace(/\\/g, '/');
-    var componentPathParts = componentPath.split('/');
-    return {
-      metaFile: filepath,
-      directory: path.dirname(filepath),
-      path: componentPath,
-      type: componentPathParts[0],
-      name: componentPathParts[1],
-      data: data
-    };
-  }
-
-  /**
-   * Process the examle files when load into the file cache
-   */
-  function exampleTemplateProcessor(filepath, fileContent) {
-    return {
-      name: path.basename(filepath).replace(/\..+$/, ''),
-      filename: filepath,
-      content: fileContent.toString()
-    };
-  }
-
-  /**
-   * Process the readme files when load into the file cache
-   */
-  function readmeProcessor(filepath, fileContent) {
-    return new Promise((resolve, reject) => marked(fileContent.toString(), function(err, result) {
-      return err ? reject(err) : resolve(result);
-    }));
-  }
 
   /**
    * Returns a key value pair list for all parsed pattern.json files:
