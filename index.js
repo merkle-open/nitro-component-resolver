@@ -57,7 +57,7 @@ module.exports = function NitroPatternResolver(options) {
       fileProcessor: (filepath, fileContent) => {
         var exampleName = path.basename(filepath).replace(/\..+$/, '');
         return Promise.resolve(options.exampleRenderer(this, {
-          name: name,
+          name: exampleName,
           filepath: filepath,
           content: fileContent.toString(),
           hidden: path.basename(filepath).substr(0, 1) === '_'
