@@ -1,10 +1,15 @@
 {
-  "name": "nitro-pattern-resolver",
+  "name": "nitro-component-resolver",
   "version": "0.0.1",
   "description": "A helper to resolve and parse the nitro pattern structure and meta files",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "ava -v",
+    "posttest": "npm-run-all posttest:*",
+    "posttest:lint": "eslint test/test.js",
+    "posttest:coverage": "nyc ava",
+    "posttest:coverage-report": "nyc report --reporter=html",
+    "posttest:coverage-check": "nyc check-coverage --lines 100 --functions 100 --branches 100"
   },
   "repository": {
     "type": "git",
@@ -22,5 +27,15 @@
   "dependencies": {
     "hot-file-cache": "0.0.7",
     "lodash": "^4.13.1"
+  },
+  "devDependencies": {
+    "@namics/eslint-config": "git://github.com/namics/eslint-config-namics.git#develop",
+    "ava": "^0.15.2",
+    "babel-eslint": "^6.1.0",
+    "coveralls": "^2.11.9",
+    "eslint": "^2.13.1",
+    "eslint-plugin-import": "^1.9.2",
+    "npm-run-all": "^2.2.2",
+    "nyc": "^6.6.1"
   }
 }

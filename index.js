@@ -8,7 +8,7 @@ var assert = require('assert');
 var path = require('path');
 var HotFileCache = require('hot-file-cache');
 
-module.exports = function NitroPatternResolver(options) {
+module.exports = function NitroComponentResolver(options) {
   assert(typeof options === 'object' && options.rootDirectory, 'rootDirectory not specified');
   // Defaults
   options = _.extend ({
@@ -17,8 +17,8 @@ module.exports = function NitroPatternResolver(options) {
     exampleFolderName: '_example',
     patternExpression: '*/*/pattern.json',
     // Optional renderer
-    exampleRenderer: (renderData) => renderData,
-    readmeRenderer: (renderData) => renderData,
+    exampleRenderer: (resolver, renderData) => renderData,
+    readmeRenderer: (resolver, renderData) => renderData,
   }, options);
 
   var patternFiles = new HotFileCache(options.patternExpression, {
@@ -115,7 +115,7 @@ module.exports = function NitroPatternResolver(options) {
   this.getComponent = function getComponent(componentPath) {
     return this.getComponents().then(function(components) {
       if (!components[componentPath]) {
-        return Promise.reject('Could not resolve component "' + componentPath + '"');
+        throw new Error('Could not resolve component "' + componentPath + '"');
       }
       return components[componentPath];
     });
@@ -126,7 +126,7 @@ module.exports = function NitroPatternResolver(options) {
    */
   this.getComponentReadme = function getComponentReadme(componentPath) {
     if (!options.readme) {
-      throw new Error('pattern resolver: readmes are deactivated');
+      throw new Error('component resolver: readmes are deactivated');
     }
     var readmePath = path.join(componentPath, 'readme.md');
     return readmeFiles.fileExists(readmePath)
@@ -142,17 +142,18 @@ module.exports = function NitroPatternResolver(options) {
    */
   this.getComponentExamples = function getComponentExamples(componentDirectory) {
     if (!options.examples) {
-      throw new Error('pattern resolver: examples are deactivated');
+      throw new Error('component resolver: examples are deactivated');
     }
     var exampleDirectory = path.join(componentDirectory, options.exampleFolderName);
     // filter all examples for files which are in the example path
     return exampleFiles.getFiles().then(function(filenames) {
+      filenames.sort();
       return Promise.all(_.sortedUniq(filenames)
         .filter(function(filename) {
           return filename.indexOf(exampleDirectory) === 0;
         })
         .map(function(filename) {
-          return exampleFiles.readFile(filename)
+          return exampleFiles.readFile(filename);
         })
       );
     });
