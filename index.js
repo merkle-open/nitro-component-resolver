@@ -17,8 +17,8 @@ module.exports = function NitroPatternResolver(options) {
     exampleFolderName: '_example',
     patternExpression: '*/*/pattern.json',
     // Optional renderer
-    exampleRenderer: (renderData) => renderData.content,
-    readmeRenderer: (renderData) => renderData.content,
+    exampleRenderer: (renderData) => renderData,
+    readmeRenderer: (renderData) => renderData,
   }, options);
 
   var patternFiles = new HotFileCache(options.patternExpression, {
@@ -56,16 +56,10 @@ module.exports = function NitroPatternResolver(options) {
        */
       fileProcessor: (filepath, fileContent) => {
         var exampleName = path.basename(filepath).replace(/\..+$/, '');
-        return Promise.resolve(options.exampleRenderer({
+        return Promise.resolve(options.exampleRenderer(this, {
+          name: name,
           filepath: filepath,
           content: fileContent.toString(),
-          exampleName: exampleName,
-          resolver: this
-        }))
-        .then((content) =>({
-          name: exampleName,
-          filename: filepath,
-          content: content,
           hidden: path.basename(filepath).substr(0, 1) === '_'
         }));
       }
@@ -81,10 +75,9 @@ module.exports = function NitroPatternResolver(options) {
         * Process the readme.md files when load into the file cache
         */
        fileProcessor: (filepath, fileContent) => {
-         return Promise.resolve(options.readmeRenderer({
+         return Promise.resolve(options.readmeRenderer(this, {
            filepath: filepath,
-           content: fileContent.toString(),
-           resolver: this
+           content: fileContent.toString()
          }));
        }
      });
