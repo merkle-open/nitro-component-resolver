@@ -65,7 +65,8 @@ module.exports = function NitroPatternResolver(options) {
         .then((content) =>({
           name: exampleName,
           filename: filepath,
-          content: content
+          content: content,
+          hidden: path.basename(filepath).substr(0, 1) === '_'
         }));
       }
     });
