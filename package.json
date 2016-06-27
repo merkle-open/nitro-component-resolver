@@ -6,7 +6,7 @@
   "scripts": {
     "test": "ava -v",
     "posttest": "npm-run-all posttest:*",
-    "posttest:lint": "eslint test/test.js",
+    "posttest:lint": "eslint .",
     "posttest:coverage": "nyc ava",
     "posttest:coverage-report": "nyc report --reporter=html",
     "posttest:coverage-check": "nyc check-coverage --lines 100 --functions 100 --branches 100"
