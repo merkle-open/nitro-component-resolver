@@ -8,12 +8,13 @@ A helper to resolve and parse the nitro pattern structure and meta files.
 ## Installation
 
 ```bash
-npm i --save-dev nitro-component-resolver
+npm i --save-dev @namics/nitro-component-resolver
 ```
 
 ## Usage
 
 ```js
+const ComponentResolver = require('@namics/nitro-component-resolver');
 const resolver = new ComponentResolver({
     rootDirectory: rootDirectories.valid,
     // Readme lookup
