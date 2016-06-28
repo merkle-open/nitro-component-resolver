@@ -13,23 +13,25 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/namics/node-modules.git"
+    "url": "git+https://github.com/namics/nitro-component-resolver"
   },
   "keywords": [
-    "cache"
+    "nitro",
+    "component",
+    "resolver"
   ],
   "author": "Jan Nicklas",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/namics/node-modules/issues"
+    "url": "https://github.com/namics/nitro-component-resolver/issues"
   },
-  "homepage": "https://github.com/namics/node-modules#readme",
+  "homepage": "https://github.com/namics/nitro-component-resolver#readme",
   "dependencies": {
     "hot-file-cache": "0.0.7",
     "lodash": "^4.13.1"
   },
   "devDependencies": {
-    "@namics/eslint-config": "git://github.com/namics/eslint-config-namics.git#develop",
+    "@namics/eslint-config": "^0.1.0",
     "ava": "^0.15.2",
     "babel-eslint": "^6.1.0",
     "coveralls": "^2.11.9",
