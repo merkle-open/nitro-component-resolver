@@ -35,8 +35,7 @@ test('should throw if a JSON contains errors', async t => {
 		await resolver.getComponents();
 	});
 	const invalidJsonFile = path.resolve(rootDirectories.invalid, 'atoms/button/pattern.json');
-	const expectedError = `Failed to parse \"${invalidJsonFile}\" SyntaxError: Unexpected end of input`;
-	t.is(err, expectedError);
+	t.regex(err, new RegExp(`^Failed to parse "${invalidJsonFile}" SyntaxError: Unexpected end`));
 	t.pass();
 });
 
