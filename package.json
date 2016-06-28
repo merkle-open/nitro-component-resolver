@@ -1,6 +1,6 @@
 {
   "name": "@namics/nitro-component-resolver",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A helper to resolve and parse the nitro pattern structure and meta files",
   "main": "index.js",
   "scripts": {
@@ -27,7 +27,7 @@
   },
   "homepage": "https://github.com/namics/nitro-component-resolver#readme",
   "dependencies": {
-    "hot-file-cache": "0.0.7",
+    "hot-file-cache": "0.0.9",
     "lodash": "^4.13.1"
   },
   "devDependencies": {

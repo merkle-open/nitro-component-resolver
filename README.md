@@ -21,7 +21,9 @@ const resolver = new ComponentResolver({
     // Readme lookup
     readme: true,
     // Example lookup
-    examples: true
+    examples: true,
+    // File watch mode
+    watch: true
 });
 resolver.getComponents()
     .then(function(components) {

@@ -13,6 +13,7 @@ module.exports = function NitroComponentResolver(userOptions) {
 	assert(typeof userOptions === 'object' && userOptions.rootDirectory, 'rootDirectory not specified');
 	// Defaults
 	const options = _.extend({
+		watch: true,
 		examples: false,
 		readme: true,
 		exampleFolderName: '_example',
@@ -24,6 +25,7 @@ module.exports = function NitroComponentResolver(userOptions) {
 
 	const patternFiles = new HotFileCache(options.patternExpression, {
 		cwd: options.rootDirectory,
+		hot: options.watch,
 		/*
 		 * Process the pattern.json files when load into the file cache
 		 */
@@ -52,6 +54,7 @@ module.exports = function NitroComponentResolver(userOptions) {
 	if (options.examples) {
 		exampleFiles = new HotFileCache(`*/*/${options.exampleFolderName}/*.*`, {
 			cwd: options.rootDirectory,
+			hot: options.watch,
 			/*
 			 * Process the examle files when load into the file cache
 			 */
@@ -72,6 +75,7 @@ module.exports = function NitroComponentResolver(userOptions) {
 	if (options.readme) {
 		readmeFiles = new HotFileCache('*/*/readme.md', {
 			cwd: options.rootDirectory,
+			hot: options.watch,
 			/*
 			 * Process the readme.md files when load into the file cache
 			 */
@@ -81,6 +85,11 @@ module.exports = function NitroComponentResolver(userOptions) {
 					content: fileContent.toString()
 				}))
 		});
+	}
+
+	// Auto invalidation of readmes if an example changes
+	if (options.readme && options.examples) {
+		exampleFiles.on('cache-revoked', () => readmeFiles.invalidateEntireCache());
 	}
 
 	/**

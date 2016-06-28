@@ -1,4 +1,4 @@
-/* eslint max-len: off, quotes:off */
+/* eslint max-len: off, quotes:off, no-param-reassign: off */
 import test from 'ava';
 import path from 'path';
 import denodeify from 'denodeify';
@@ -7,6 +7,8 @@ import ComponentResolver from '..';
 const copy = denodeify(require('ncp').ncp);
 const mkdirp = denodeify(require('mkdirp'));
 const rimraf = denodeify(require('rimraf'));
+const unlink = denodeify(require('fs').unlink);
+const sleep = (duration) => new Promise((resolve) => setTimeout(resolve, duration));
 
 const tmp = path.resolve(__dirname, '..', 'tmp', 'testing');
 
@@ -157,6 +159,48 @@ test('should return readmde', async t => {
 		filepath: path.join(typographyDirectory, 'readme.md'),
 		content: 'Please read me!'
 	});
+	t.pass();
+});
+
+test('should load the readmde from cache', async t => {
+	const rootDir = await createTestEnvironment('valid');
+	let renderIndex = 0;
+	const resolver = new ComponentResolver({
+		rootDirectory: rootDir,
+		readme: true,
+		readmeRenderer: (resolverInstance, renderData) => {
+			renderData.content = ++renderIndex;
+			return renderData;
+		}
+	});
+	const typographyDirectory = path.resolve(rootDir, 'helper/typography');
+	const readme = await resolver.getComponentReadme(typographyDirectory);
+	t.is(readme.content, 1);
+	const readme2 = await resolver.getComponentReadme(typographyDirectory);
+	t.is(readme, readme2);
+	t.pass();
+});
+
+test('should invalidate the readme cache when changing an example', async t => {
+	const rootDir = await createTestEnvironment('valid');
+	let renderIndex = 0;
+	const resolver = new ComponentResolver({
+		rootDirectory: rootDir,
+		readme: true,
+		examples: true,
+		readmeRenderer: (resolverInstance, renderData) => {
+			renderData.content = ++renderIndex;
+			return renderData;
+		}
+	});
+	const typographyDirectory = path.resolve(rootDir, 'helper/typography');
+	const readme = await resolver.getComponentReadme(typographyDirectory);
+	await resolver.getComponentExamples(typographyDirectory);
+	t.is(readme.content, 1);
+	await unlink(path.join(typographyDirectory, '_example', 'small.hbs'));
+	await sleep(200);
+	const readme2 = await resolver.getComponentReadme(typographyDirectory);
+	t.is(readme2.content, 2);
 	t.pass();
 });
 

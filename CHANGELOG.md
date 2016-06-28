@@ -1,0 +1,11 @@
+Change History
+==============
+
+v0.0.2
+----
+* Add `watch` option
+* Revoke readme caches if examples are changed
+
+v0.0.1
+------
+* Initial release
