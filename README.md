@@ -1,4 +1,5 @@
 # Nitro Component Resolver
+[![npm version](https://badge.fury.io/js/%40namics%2Fnitro-component-resolver.svg)](https://badge.fury.io/js/%40namics%2Fnitro-component-resolver)
 [![Build Status](https://travis-ci.org/namics/nitro-component-resolver.svg?branch=master)](https://travis-ci.org/namics/nitro-component-resolver)
 [![Coverage Status](https://coveralls.io/repos/github/namics/nitro-component-resolver/badge.svg?branch=master)](https://coveralls.io/github/namics/nitro-component-resolver?branch=master)
 [![Codestyle](https://img.shields.io/badge/codestyle-namics-green.svg)](https://github.com/namics/eslint-config-namics)
