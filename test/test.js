@@ -1,11 +1,22 @@
 /* eslint max-len: off, quotes:off */
 import test from 'ava';
 import path from 'path';
+import denodeify from 'denodeify';
 import ComponentResolver from '..';
 
-const rootDirectories = {
-	valid: path.resolve(__dirname, 'fixtures', 'valid', 'components'),
-	invalid: path.resolve(__dirname, 'fixtures', 'invalid', 'components'),
+const copy = denodeify(require('ncp').ncp);
+const mkdirp = denodeify(require('mkdirp'));
+const rimraf = denodeify(require('rimraf'));
+
+const tmp = path.resolve(__dirname, '..', 'tmp', 'testing');
+
+let testDirId = 0;
+const createTestEnvironment = async(environment = 'valid') => {
+	const targetDir = path.resolve(tmp, `test-${testDirId++}`);
+	const componentDir = path.join(targetDir, 'components');
+	await mkdirp(targetDir);
+	await copy(path.resolve(__dirname, 'fixtures', environment), targetDir);
+	return componentDir;
 };
 
 const getErrorMessage = async(cb) => {
@@ -18,8 +29,9 @@ const getErrorMessage = async(cb) => {
 };
 
 test('should list all components of the given folder', async t => {
+	const rootDir = await createTestEnvironment('valid');
 	const resolver = new ComponentResolver({
-		rootDirectory: rootDirectories.valid
+		rootDirectory: rootDir
 	});
 	const componentNames = Object.keys(await resolver.getComponents());
 	componentNames.sort();
@@ -28,22 +40,24 @@ test('should list all components of the given folder', async t => {
 });
 
 test('should throw if a JSON contains errors', async t => {
+	const rootDir = await createTestEnvironment('invalid');
 	const resolver = new ComponentResolver({
-		rootDirectory: rootDirectories.invalid
+		rootDirectory: rootDir
 	});
 	const err = await getErrorMessage(async() => {
 		await resolver.getComponents();
 	});
-	const invalidJsonFile = path.resolve(rootDirectories.invalid, 'atoms/button/pattern.json');
+	const invalidJsonFile = path.resolve(rootDir, 'atoms/button/pattern.json');
 	t.regex(err, new RegExp(`^Failed to parse "${invalidJsonFile}" SyntaxError: Unexpected end`));
 	t.pass();
 });
 
 test('should fail listing examples if examples is set to false', async t => {
+	const rootDir = await createTestEnvironment('valid');
 	const resolver = new ComponentResolver({
-		rootDirectory: rootDirectories.valid
+		rootDirectory: rootDir
 	});
-	const buttonDirectory = path.resolve(rootDirectories.valid, 'atoms/button');
+	const buttonDirectory = path.resolve(rootDir, 'atoms/button');
 	const err = await getErrorMessage(async() => {
 		await resolver.getComponentExamples(buttonDirectory);
 	});
@@ -51,13 +65,14 @@ test('should fail listing examples if examples is set to false', async t => {
 	t.pass();
 });
 test('should return component', async t => {
+	const rootDir = await createTestEnvironment('valid');
 	const resolver = new ComponentResolver({
-		rootDirectory: rootDirectories.valid
+		rootDirectory: rootDir
 	});
 	const component = await resolver.getComponent('atoms/button');
 	t.deepEqual(component, {
-		metaFile: path.resolve(rootDirectories.valid, 'atoms/button/pattern.json'),
-		directory: path.resolve(rootDirectories.valid, 'atoms/button'),
+		metaFile: path.resolve(rootDir, 'atoms/button/pattern.json'),
+		directory: path.resolve(rootDir, 'atoms/button'),
 		path: 'atoms/button',
 		type: 'atoms',
 		name: 'button',
@@ -72,11 +87,12 @@ test('should return component', async t => {
 });
 
 test('should list examples', async t => {
+	const rootDir = await createTestEnvironment('valid');
 	const resolver = new ComponentResolver({
-		rootDirectory: rootDirectories.valid,
+		rootDirectory: rootDir,
 		examples: true
 	});
-	const buttonDirectory = path.resolve(rootDirectories.valid, 'atoms/button');
+	const buttonDirectory = path.resolve(rootDir, 'atoms/button');
 	const examples = await resolver.getComponentExamples(buttonDirectory);
 	t.deepEqual(examples, [{
 		name: '_hidden',
@@ -93,8 +109,9 @@ test('should list examples', async t => {
 });
 
 test('should throw on unkown component', async t => {
+	const rootDir = await createTestEnvironment('valid');
 	const resolver = new ComponentResolver({
-		rootDirectory: rootDirectories.valid,
+		rootDirectory: rootDir
 	});
 	const err = await getErrorMessage(async() => {
 		await resolver.getComponent('fancy/fancy');
@@ -104,8 +121,9 @@ test('should throw on unkown component', async t => {
 });
 
 test('should throw if trying to access deactivated readme', async t => {
+	const rootDir = await createTestEnvironment('valid');
 	const resolver = new ComponentResolver({
-		rootDirectory: rootDirectories.valid,
+		rootDirectory: rootDir,
 		readme: false
 	});
 	const err = await getErrorMessage(async() => {
@@ -116,27 +134,33 @@ test('should throw if trying to access deactivated readme', async t => {
 });
 
 test('should return not readmde if no file exists', async t => {
+	const rootDir = await createTestEnvironment('valid');
 	const resolver = new ComponentResolver({
-		rootDirectory: rootDirectories.valid,
+		rootDirectory: rootDir,
 		readme: true
 	});
-	const buttonDirectory = path.resolve(rootDirectories.valid, 'atoms/button');
+	const buttonDirectory = path.resolve(rootDir, 'atoms/button');
 	const readme = await resolver.getComponentReadme(buttonDirectory);
 	t.is(readme, undefined);
 	t.pass();
 });
 
 test('should return readmde', async t => {
+	const rootDir = await createTestEnvironment('valid');
 	const resolver = new ComponentResolver({
-		rootDirectory: rootDirectories.valid,
+		rootDirectory: rootDir,
 		readme: true
 	});
-	const typographyDirectory = path.resolve(rootDirectories.valid, 'helper/typography');
+	const typographyDirectory = path.resolve(rootDir, 'helper/typography');
 	const readme = await resolver.getComponentReadme(typographyDirectory);
 	t.deepEqual(readme, {
 		filepath: path.join(typographyDirectory, 'readme.md'),
 		content: 'Please read me!'
 	});
 	t.pass();
+});
+
+test.after.always('cleanup', async () => {
+	await rimraf(tmp);
 });
 
