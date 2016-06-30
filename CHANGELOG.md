@@ -1,6 +1,10 @@
 Change History
 ==============
 
+v0.0.3
+----
+* Fix `watch`issue
+
 v0.0.2
 ----
 * Add `watch` option

@@ -1,6 +1,6 @@
 {
   "name": "@namics/nitro-component-resolver",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A helper to resolve and parse the nitro pattern structure and meta files",
   "main": "index.js",
   "scripts": {
@@ -37,7 +37,7 @@
     "coveralls": "^2.11.9",
     "denodeify": "^1.2.1",
     "eslint": "^2.13.1",
-    "eslint-plugin-import": "^1.9.2",
+    "eslint-plugin-import": "^1.10.0",
     "mkdirp": "^0.5.1",
     "ncp": "^2.0.0",
     "npm-run-all": "^2.3.0",
