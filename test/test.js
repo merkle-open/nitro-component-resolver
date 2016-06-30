@@ -2,6 +2,7 @@
 import test from 'ava';
 import path from 'path';
 import denodeify from 'denodeify';
+import escapeStringRegexp from 'escape-string-regexp';
 import ComponentResolver from '..';
 
 const copy = denodeify(require('ncp').ncp);
@@ -50,7 +51,7 @@ test('should throw if a JSON contains errors', async t => {
 		await resolver.getComponents();
 	});
 	const invalidJsonFile = path.resolve(rootDir, 'atoms/button/pattern.json');
-	t.regex(err, new RegExp(`^Failed to parse "${invalidJsonFile}" SyntaxError: Unexpected end`));
+	t.regex(err, new RegExp(`^Failed to parse "${escapeStringRegexp(invalidJsonFile)}" SyntaxError: Unexpected end`));
 	t.pass();
 });
 
