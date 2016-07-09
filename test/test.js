@@ -280,6 +280,28 @@ test('should invalidate the example cache when changing the pattern.json', async
 	t.pass();
 });
 
+test('should read example from disk if example cache is deactivated', async t => {
+	const rootDir = await createTestEnvironment('valid');
+	let renderIndex = 0;
+	const resolver = new ComponentResolver({
+		rootDirectory: rootDir,
+		readme: false,
+		examples: true,
+		cacheExamples: false,
+		exampleRenderer: (resolverInstance, renderData) => {
+			renderData.content = ++renderIndex;
+			return renderData;
+		}
+	});
+	const typographyDirectory = path.resolve(rootDir, 'helper/typography');
+	const examples = await resolver.getComponentExamples(typographyDirectory);
+	t.is(examples[0].content, 1);
+	t.is(examples[1].content, 2);
+	const examples2 = await resolver.getComponentExamples(typographyDirectory);
+	t.is(Math.min(examples2[0].content, examples2[1].content), 3);
+	t.pass();
+});
+
 test.after.always('cleanup', async () => {
 	await rimraf(tmp);
 });

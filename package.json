@@ -1,6 +1,6 @@
 {
   "name": "@namics/nitro-component-resolver",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "A helper to resolve and parse the nitro pattern structure and meta files",
   "main": "index.js",
   "scripts": {
@@ -27,13 +27,13 @@
   },
   "homepage": "https://github.com/namics/nitro-component-resolver#readme",
   "dependencies": {
-    "hot-file-cache": "1.0.0",
+    "hot-file-cache": "1.1.0",
     "lodash": "^4.13.1"
   },
   "devDependencies": {
     "@namics/eslint-config": "^0.2.0",
     "ava": "^0.15.2",
-    "babel-eslint": "^6.1.1",
+    "babel-eslint": "^6.1.2",
     "coveralls": "^2.11.9",
     "denodeify": "^1.2.1",
     "escape-string-regexp": "^1.0.5",

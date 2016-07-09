@@ -14,8 +14,9 @@ module.exports = function NitroComponentResolver(userOptions) {
 	// Defaults
 	const options = _.extend({
 		watch: true,
-		examples: false,
 		readme: true,
+		examples: false,
+		cacheExamples: true,
 		exampleFolderName: '_example',
 		mainTemplate: '*/*/*.hbs',
 		patternExpression: '*/*/pattern.json',
@@ -61,6 +62,7 @@ module.exports = function NitroComponentResolver(userOptions) {
 		exampleFiles = new HotFileCache(`*/*/${options.exampleFolderName}/*.*`, {
 			cwd: options.rootDirectory,
 			hot: options.watch,
+			useCache: options.cacheExamples,
 			/*
 			 * Process the examle files when load into the file cache
 			 */

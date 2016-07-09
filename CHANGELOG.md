@@ -1,6 +1,10 @@
 Change History
 ==============
 
+v0.0.5
+----
+* Allow to disable the example cache
+
 v0.0.4
 ----
 * Improve cache invalidation
