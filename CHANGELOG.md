@@ -1,6 +1,10 @@
 Change History
 ==============
 
+v0.0.4
+----
+* Improve cache invalidation
+
 v0.0.3
 ----
 * Fix `watch`issue

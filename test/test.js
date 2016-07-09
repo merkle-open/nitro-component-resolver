@@ -205,6 +205,81 @@ test('should invalidate the readme cache when changing an example', async t => {
 	t.pass();
 });
 
+test('should invalidate the example cache when changing another example', async t => {
+	const rootDir = await createTestEnvironment('valid');
+	let renderIndex = 0;
+	const resolver = new ComponentResolver({
+		rootDirectory: rootDir,
+		readme: true,
+		examples: true,
+		exampleRenderer: (resolverInstance, renderData) => {
+			renderData.content = ++renderIndex;
+			return renderData;
+		}
+	});
+	const typographyDirectory = path.resolve(rootDir, 'helper/typography');
+	await resolver.getComponentExamples(typographyDirectory);
+	const examples = await resolver.getComponentExamples(typographyDirectory);
+	t.is(examples[0].content, 1);
+	t.is(examples[1].content, 2);
+	await resolver.getComponentExamples(typographyDirectory);
+	await unlink(path.join(typographyDirectory, '_example', 'small.hbs'));
+	await sleep(200);
+	const examples2 = await resolver.getComponentExamples(typographyDirectory);
+	t.is(examples2[0].content, 3);
+	t.pass();
+});
+
+test('should invalidate the example cache when changing the main template', async t => {
+	const rootDir = await createTestEnvironment('valid');
+	let renderIndex = 0;
+	const resolver = new ComponentResolver({
+		rootDirectory: rootDir,
+		readme: true,
+		examples: true,
+		exampleRenderer: (resolverInstance, renderData) => {
+			renderData.content = ++renderIndex;
+			return renderData;
+		}
+	});
+	const typographyDirectory = path.resolve(rootDir, 'helper/typography');
+	await resolver.getComponentExamples(typographyDirectory);
+	const examples = await resolver.getComponentExamples(typographyDirectory);
+	t.is(examples[0].content, 1);
+	t.is(examples[1].content, 2);
+	await resolver.getComponentExamples(typographyDirectory);
+	await unlink(path.join(typographyDirectory, 'typography.hbs'));
+	await sleep(200);
+	const examples2 = await resolver.getComponentExamples(typographyDirectory);
+	t.is(Math.min(examples2[0].content, examples2[1].content), 3);
+	t.pass();
+});
+
+test('should invalidate the example cache when changing the pattern.json', async t => {
+	const rootDir = await createTestEnvironment('valid');
+	let renderIndex = 0;
+	const resolver = new ComponentResolver({
+		rootDirectory: rootDir,
+		readme: false,
+		examples: true,
+		exampleRenderer: (resolverInstance, renderData) => {
+			renderData.content = ++renderIndex;
+			return renderData;
+		}
+	});
+	const typographyDirectory = path.resolve(rootDir, 'helper/typography');
+	await resolver.getComponentExamples(typographyDirectory);
+	const examples = await resolver.getComponentExamples(typographyDirectory);
+	t.is(examples[0].content, 1);
+	t.is(examples[1].content, 2);
+	await resolver.getComponentExamples(typographyDirectory);
+	await unlink(path.join(typographyDirectory, 'pattern.json'));
+	await sleep(200);
+	const examples2 = await resolver.getComponentExamples(typographyDirectory);
+	t.is(Math.min(examples2[0].content, examples2[1].content), 3);
+	t.pass();
+});
+
 test.after.always('cleanup', async () => {
 	await rimraf(tmp);
 });

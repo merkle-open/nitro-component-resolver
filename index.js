@@ -17,11 +17,17 @@ module.exports = function NitroComponentResolver(userOptions) {
 		examples: false,
 		readme: true,
 		exampleFolderName: '_example',
+		mainTemplate: '*/*/*.hbs',
 		patternExpression: '*/*/pattern.json',
 		// Optional renderer
 		exampleRenderer: (resolver, renderData) => renderData,
 		readmeRenderer: (resolver, renderData) => renderData,
 	}, userOptions);
+
+	const mainTemplate = new HotFileCache(options.mainTemplate, {
+		cwd: options.rootDirectory,
+		hot: options.watch,
+	});
 
 	const patternFiles = new HotFileCache(options.patternExpression, {
 		cwd: options.rootDirectory,
@@ -44,7 +50,7 @@ module.exports = function NitroComponentResolver(userOptions) {
 				path: componentPath,
 				type: componentPathParts[0],
 				name: componentPathParts[1],
-				data: data
+				data
 			};
 		}
 	});
@@ -61,8 +67,8 @@ module.exports = function NitroComponentResolver(userOptions) {
 			fileProcessor: (filepath, fileContent) => {
 				const exampleName = path.basename(filepath).replace(/\..+$/, '');
 				return Promise.resolve(options.exampleRenderer(this, {
+					filepath,
 					name: exampleName,
-					filepath: filepath,
 					content: fileContent.toString(),
 					hidden: path.basename(filepath).substr(0, 1) === '_'
 				}));
@@ -81,19 +87,27 @@ module.exports = function NitroComponentResolver(userOptions) {
 			 */
 			fileProcessor: (filepath, fileContent) =>
 				Promise.resolve(options.readmeRenderer(this, {
-					filepath: filepath,
+					filepath,
 					content: fileContent.toString()
 				}))
 		});
 	}
 
-	// Auto invalidation of readmes if an example changes
-	if (options.readme && options.examples) {
-		exampleFiles.on('cache-revoked', () => readmeFiles.invalidateEntireCache());
+	if (options.examples) {
+		// Auto invalidation of readmes if an example changes
+		if (options.readme) {
+			exampleFiles.on('cache-revoked', () => readmeFiles.invalidateEntireCache());
+		}
+		// Auto invalidate examples if another (e.g. a child component) changed
+		exampleFiles.on('all', () => exampleFiles.invalidateEntireCache());
+		// Auto invalidate examples if the package json changed
+		patternFiles.on('all', () => exampleFiles.invalidateEntireCache());
+		// Auto invalidate examples if the main template changed
+		mainTemplate.on('all', () => exampleFiles.invalidateEntireCache());
 	}
 
 	/**
-	 * @return {object} a key value pair list for all parsed pattern.json files:
+	 * @returns {Object} a key value pair list for all parsed pattern.json files:
 	 * + name: example name (from filename)
 	 * + path: component path (relative unix directory e.g. "atoms/button")
 	 * + directory: component directory (relative directory)
@@ -112,7 +126,7 @@ module.exports = function NitroComponentResolver(userOptions) {
 
 	/**
 	 * @param {string} componentPath relative unix path e.g. 'atoms/button'
-	 * @return {object} a key value pair list for pattern.json files of the given path
+	 * @returns {Object} a key value pair list for pattern.json files of the given path
 	 *
 	 * + name: example name (from filename)
 	 * + path: component path (relative unix directory e.g. "atoms/button")
@@ -130,7 +144,7 @@ module.exports = function NitroComponentResolver(userOptions) {
 
 	/**
 	 * @param {string} componentPath relative unix path e.g. 'atoms/button'
-	 * @return {string} the html of the parsed readme markdown
+	 * @returns {string} the html of the parsed readme markdown
 	 */
 	this.getComponentReadme = function getComponentReadme(componentPath) {
 		if (!options.readme) {
@@ -148,7 +162,7 @@ module.exports = function NitroComponentResolver(userOptions) {
 
 	/**
 	 * @param {string} componentDirectory absolute unix path e.g. 'atoms/button'
-	 * @return {object} processed example object
+	 * @returns {Object} processed example object
 	 * Returns an array of absolute filenames to the examples inside the given component directory
 	 */
 	this.getComponentExamples = function getComponentExamples(componentDirectory) {
