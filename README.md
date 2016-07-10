@@ -4,7 +4,8 @@
 [![Coverage Status](https://coveralls.io/repos/github/namics/nitro-component-resolver/badge.svg?branch=master)](https://coveralls.io/github/namics/nitro-component-resolver?branch=master)
 [![Codestyle](https://img.shields.io/badge/codestyle-namics-green.svg)](https://github.com/namics/eslint-config-namics)
 
-A helper to resolve, cache and parse the nitro pattern structure and meta files.
+The nitro component resolver looks up all `pattern.json` (can be changed) files in the given nitro components directory
+and provides fast and easy access to the files and their content during development and production.
 
 ## Installation
 
@@ -17,31 +18,45 @@ npm i --save-dev @namics/nitro-component-resolver
 ```js
 const ComponentResolver = require('@namics/nitro-component-resolver');
 const resolver = new ComponentResolver({
-    rootDirectory: rootDirectories.valid,
-    // File watch mode
-    watch: true
+    rootDirectory: '/example/path/components',
+    // Invalidate cache on file changes (can be set to false for production mode)
+    // Default: true
+    watch: true,
+    // Main template (please adjust if you use another template language)
+    // Default: '*/*/*.hbs'
+    mainTemplate: '*/*/*.hbs',
+    // Meta json which contains the component details
+    // used by getComponents()
+    // Default: '*/*/pattern.json'
+    patternExpression: '*/*/pattern.json',
+    // Wether to cache the examples
+    // Default and recommend value: true
+    cacheExamples: true,
 });
+
 resolver.getComponentTypes()
     .then(function(componentTypes) {
         // Returns all existing nitro component types e.g. 'atoms', 'molecules'
         console.log(componentTypes);
     });
+
 resolver.getComponents()
     .then(function(components) {
         // Returns all nitro components and their package.json content
         console.log(components);
     });
+
 resolver.getComponents('atoms')
     .then(function(components) {
         // Returns the nitro components of type 'atoms' and their package.json content
         console.log(components);
     });
-// Optional
+
 resolver.getComponentExamples('a/path/to/atoms/button')
     .then(function(examples) {
         console.log(examples);
     });
-// Optional
+
 resolver.getComponentReadme('a/path/to/atoms/button')
     .then(function(readme) {
         console.log(readme);
