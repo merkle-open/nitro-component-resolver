@@ -14,8 +14,6 @@ module.exports = function NitroComponentResolver(userOptions) {
 	// Defaults
 	const options = _.extend({
 		watch: true,
-		readme: true,
-		examples: false,
 		cacheExamples: true,
 		exampleFolderName: '_example',
 		mainTemplate: '*/*/*.hbs',
@@ -57,69 +55,78 @@ module.exports = function NitroComponentResolver(userOptions) {
 	});
 
 	// Search for examples inside the project
-	let exampleFiles;
-	if (options.examples) {
-		exampleFiles = new HotFileCache(`*/*/${options.exampleFolderName}/*.*`, {
-			cwd: options.rootDirectory,
-			hot: options.watch,
-			useCache: options.cacheExamples,
-			/*
-			 * Process the examle files when load into the file cache
-			 */
-			fileProcessor: (filepath, fileContent) => {
-				const exampleName = path.basename(filepath).replace(/\..+$/, '');
-				return Promise.resolve(options.exampleRenderer(this, {
-					filepath,
-					name: exampleName,
-					content: fileContent.toString(),
-					hidden: path.basename(filepath).substr(0, 1) === '_'
-				}));
-			}
-		});
-	}
+	const exampleFiles = new HotFileCache(`*/*/${options.exampleFolderName}/*.*`, {
+		cwd: options.rootDirectory,
+		hot: options.watch,
+		useCache: options.cacheExamples,
+		/*
+		 * Process the examle files when load into the file cache
+		 */
+		fileProcessor: (filepath, fileContent) => {
+			const exampleName = path.basename(filepath).replace(/\..+$/, '');
+			return Promise.resolve(options.exampleRenderer(this, {
+				filepath,
+				name: exampleName,
+				content: fileContent.toString(),
+				hidden: path.basename(filepath).substr(0, 1) === '_'
+			}));
+		}
+	});
 
 	// Readme files
-	let readmeFiles;
-	if (options.readme) {
-		readmeFiles = new HotFileCache('*/*/readme.md', {
-			cwd: options.rootDirectory,
-			hot: options.watch,
-			/*
-			 * Process the readme.md files when load into the file cache
-			 */
-			fileProcessor: (filepath, fileContent) =>
-				Promise.resolve(options.readmeRenderer(this, {
-					filepath,
-					content: fileContent.toString()
-				}))
-		});
-	}
+	const readmeFiles = new HotFileCache('**/readme.md', {
+		cwd: options.rootDirectory,
+		hot: options.watch,
+		/*
+		 * Process the readme.md files when load into the file cache
+		 */
+		fileProcessor: (filepath, fileContent) =>
+			Promise.resolve(options.readmeRenderer(this, {
+				filepath,
+				content: fileContent.toString()
+			}))
+	});
 
-	if (options.examples) {
-		// Auto invalidation of readmes if an example changes
-		if (options.readme) {
-			exampleFiles.on('cache-revoked', () => readmeFiles.invalidateEntireCache());
-		}
-		// Auto invalidate examples if another (e.g. a child component) changed
-		exampleFiles.on('all', () => exampleFiles.invalidateEntireCache());
-		// Auto invalidate examples if the package json changed
-		patternFiles.on('all', () => exampleFiles.invalidateEntireCache());
-		// Auto invalidate examples if the main template changed
-		mainTemplate.on('all', () => exampleFiles.invalidateEntireCache());
-	}
+	// Auto invalidation of readmes if an example changes
+	exampleFiles.on('cache-revoked', () => readmeFiles.invalidateEntireCache());
+	// Auto invalidate examples if another (e.g. a child component) changed
+	exampleFiles.on('all', () => exampleFiles.invalidateEntireCache());
+	// Auto invalidate examples if the package json changed
+	patternFiles.on('all', () => exampleFiles.invalidateEntireCache());
+	// Auto invalidate examples if the main template changed
+	mainTemplate.on('all', () => exampleFiles.invalidateEntireCache());
 
 	/**
+	 * @returns {Array} a key value pair list for all parsed pattern.json files:
+	 * + name: 'atoms', 'molecules', ...
+	 * + path: component path (relative unix directory e.g. "atoms")
+	 * + directory: absolute directory of the component type
+	 */
+	this.getComponentTypes = function getComponentTypes() {
+		return patternFiles.getFiles().then((filenames) => {
+			const fileBaseFolders = filenames.map(
+				(filename) => path.relative(options.rootDirectory, filename).split(path.sep)[0]
+			);
+			const types = _.uniq(fileBaseFolders);
+			types.sort();
+			return types;
+		});
+	};
+
+	/**
+	 * @param {string} type optional type folder name e.g. "atoms", "molecules"
 	 * @returns {Object} a key value pair list for all parsed pattern.json files:
 	 * + name: example name (from filename)
 	 * + path: component path (relative unix directory e.g. "atoms/button")
 	 * + directory: component directory (relative directory)
 	 * + data: parsed json data
 	 */
-	this.getComponents = function getComponents() {
-		return patternFiles.getFiles().then((filenames) =>
-			Promise.all(filenames.map((file) =>
-				patternFiles.readFile(file)
-			)).then((fileContents) =>
+	this.getComponents = function getComponents(type) {
+		const directory = (type ? path.join(options.rootDirectory, type) : options.rootDirectory) + path.sep;
+		return patternFiles.getFiles()
+			.then((filenames) => filenames.filter((filename) => filename.indexOf(directory) === 0))
+			.then((filenames) => Promise.all(filenames.map((file) => patternFiles.readFile(file)))
+			.then((fileContents) =>
 				// Combine path (keys) and fileContents (values) to an object
 				_.zipObject(fileContents.map((fileContent) => fileContent.path), fileContents)
 			)
@@ -149,9 +156,6 @@ module.exports = function NitroComponentResolver(userOptions) {
 	 * @returns {string} the html of the parsed readme markdown
 	 */
 	this.getComponentReadme = function getComponentReadme(componentPath) {
-		if (!options.readme) {
-			throw new Error('component resolver: readmes are deactivated');
-		}
 		const readmePath = path.join(componentPath, 'readme.md');
 		return readmeFiles.fileExists(readmePath)
 			.then((exists) => {
@@ -168,18 +172,16 @@ module.exports = function NitroComponentResolver(userOptions) {
 	 * Returns an array of absolute filenames to the examples inside the given component directory
 	 */
 	this.getComponentExamples = function getComponentExamples(componentDirectory) {
-		if (!options.examples) {
-			throw new Error('component resolver: examples are deactivated');
-		}
 		const exampleDirectory = path.join(componentDirectory, options.exampleFolderName);
 		// filter all examples for files which are in the example path
-		return exampleFiles.getFiles().then((filenames) => {
-			filenames.sort();
-			return Promise.all(_.sortedUniq(filenames)
-				.filter((filename) => filename.indexOf(exampleDirectory) === 0)
-				.map((filename) => exampleFiles.readFile(filename))
-			);
-		});
+		return exampleFiles.getFiles()
+			.then((filenames) => {
+				filenames.sort();
+				return Promise.all(_.sortedUniq(filenames)
+					.filter((filename) => filename.indexOf(exampleDirectory) === 0)
+					.map((filename) => exampleFiles.readFile(filename))
+				);
+			});
 	};
 
 };

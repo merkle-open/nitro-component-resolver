@@ -1,6 +1,12 @@
 Change History
 ==============
 
+v0.0.6
+----
+* Remove `example` and `readme` option
+* Add `getComponentTypes()`
+* Add optional type argument for `getComponents(type)`
+
 v0.0.5
 ----
 * Allow to disable the example cache

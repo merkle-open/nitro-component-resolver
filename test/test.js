@@ -38,7 +38,18 @@ test('should list all components of the given folder', async t => {
 	});
 	const componentNames = Object.keys(await resolver.getComponents());
 	componentNames.sort();
-	t.deepEqual(componentNames, ['atoms/button', 'atoms/radio', 'helper/typography']);
+	t.deepEqual(componentNames, ['atoms/button', 'atoms/radio', 'helper/grid', 'helper/typography']);
+	t.pass();
+});
+
+test('should list all components of the given folder and type', async t => {
+	const rootDir = await createTestEnvironment('valid');
+	const resolver = new ComponentResolver({
+		rootDirectory: rootDir
+	});
+	const componentNames = Object.keys(await resolver.getComponents('atoms'));
+	componentNames.sort();
+	t.deepEqual(componentNames, ['atoms/button', 'atoms/radio']);
 	t.pass();
 });
 
@@ -55,18 +66,6 @@ test('should throw if a JSON contains errors', async t => {
 	t.pass();
 });
 
-test('should fail listing examples if examples is set to false', async t => {
-	const rootDir = await createTestEnvironment('valid');
-	const resolver = new ComponentResolver({
-		rootDirectory: rootDir
-	});
-	const buttonDirectory = path.resolve(rootDir, 'atoms/button');
-	const err = await getErrorMessage(async() => {
-		await resolver.getComponentExamples(buttonDirectory);
-	});
-	t.is(err, 'component resolver: examples are deactivated');
-	t.pass();
-});
 test('should return component', async t => {
 	const rootDir = await createTestEnvironment('valid');
 	const resolver = new ComponentResolver({
@@ -120,19 +119,6 @@ test('should throw on unkown component', async t => {
 		await resolver.getComponent('fancy/fancy');
 	});
 	t.is(err, 'Could not resolve component "fancy/fancy"');
-	t.pass();
-});
-
-test('should throw if trying to access deactivated readme', async t => {
-	const rootDir = await createTestEnvironment('valid');
-	const resolver = new ComponentResolver({
-		rootDirectory: rootDir,
-		readme: false
-	});
-	const err = await getErrorMessage(async() => {
-		await resolver.getComponentReadme('atoms/button');
-	});
-	t.is(err, 'component resolver: readmes are deactivated');
 	t.pass();
 });
 
@@ -218,15 +204,15 @@ test('should invalidate the example cache when changing another example', async 
 		}
 	});
 	const typographyDirectory = path.resolve(rootDir, 'helper/typography');
-	await resolver.getComponentExamples(typographyDirectory);
-	const examples = await resolver.getComponentExamples(typographyDirectory);
+	const gridDirectory = path.resolve(rootDir, 'helper/grid');
+	await resolver.getComponentExamples(gridDirectory);
+	const examples = await resolver.getComponentExamples(gridDirectory);
 	t.is(examples[0].content, 1);
-	t.is(examples[1].content, 2);
-	await resolver.getComponentExamples(typographyDirectory);
+	await resolver.getComponentExamples(gridDirectory);
 	await unlink(path.join(typographyDirectory, '_example', 'small.hbs'));
 	await sleep(200);
-	const examples2 = await resolver.getComponentExamples(typographyDirectory);
-	t.is(examples2[0].content, 3);
+	const examples2 = await resolver.getComponentExamples(gridDirectory);
+	t.is(examples2[0].content, 2);
 	t.pass();
 });
 
@@ -242,16 +228,15 @@ test('should invalidate the example cache when changing the main template', asyn
 			return renderData;
 		}
 	});
-	const typographyDirectory = path.resolve(rootDir, 'helper/typography');
-	await resolver.getComponentExamples(typographyDirectory);
-	const examples = await resolver.getComponentExamples(typographyDirectory);
+	const gridDirectory = path.resolve(rootDir, 'helper/grid');
+	await resolver.getComponentExamples(gridDirectory);
+	const examples = await resolver.getComponentExamples(gridDirectory);
 	t.is(examples[0].content, 1);
-	t.is(examples[1].content, 2);
-	await resolver.getComponentExamples(typographyDirectory);
-	await unlink(path.join(typographyDirectory, 'typography.hbs'));
+	await resolver.getComponentExamples(gridDirectory);
+	await unlink(path.join(gridDirectory, 'grid.hbs'));
 	await sleep(200);
-	const examples2 = await resolver.getComponentExamples(typographyDirectory);
-	t.is(Math.min(examples2[0].content, examples2[1].content), 3);
+	const examples2 = await resolver.getComponentExamples(gridDirectory);
+	t.is(examples2[0].content, 2);
 	t.pass();
 });
 
@@ -267,16 +252,15 @@ test('should invalidate the example cache when changing the pattern.json', async
 			return renderData;
 		}
 	});
-	const typographyDirectory = path.resolve(rootDir, 'helper/typography');
-	await resolver.getComponentExamples(typographyDirectory);
-	const examples = await resolver.getComponentExamples(typographyDirectory);
+	const gridDirectory = path.resolve(rootDir, 'helper/grid');
+	await resolver.getComponentExamples(gridDirectory);
+	const examples = await resolver.getComponentExamples(gridDirectory);
 	t.is(examples[0].content, 1);
-	t.is(examples[1].content, 2);
-	await resolver.getComponentExamples(typographyDirectory);
-	await unlink(path.join(typographyDirectory, 'pattern.json'));
+	await resolver.getComponentExamples(gridDirectory);
+	await unlink(path.join(gridDirectory, 'pattern.json'));
 	await sleep(200);
-	const examples2 = await resolver.getComponentExamples(typographyDirectory);
-	t.is(Math.min(examples2[0].content, examples2[1].content), 3);
+	const examples2 = await resolver.getComponentExamples(gridDirectory);
+	t.is(examples2[0].content, 2);
 	t.pass();
 });
 
@@ -293,12 +277,24 @@ test('should read example from disk if example cache is deactivated', async t =>
 			return renderData;
 		}
 	});
-	const typographyDirectory = path.resolve(rootDir, 'helper/typography');
-	const examples = await resolver.getComponentExamples(typographyDirectory);
+	const gridDirectory = path.resolve(rootDir, 'helper/grid');
+	const examples = await resolver.getComponentExamples(gridDirectory);
 	t.is(examples[0].content, 1);
-	t.is(examples[1].content, 2);
-	const examples2 = await resolver.getComponentExamples(typographyDirectory);
-	t.is(Math.min(examples2[0].content, examples2[1].content), 3);
+	const examples2 = await resolver.getComponentExamples(gridDirectory);
+	t.is(examples2[0].content, 2);
+	t.pass();
+});
+
+test('should return all component types', async t => {
+	const rootDir = await createTestEnvironment('valid');
+	const resolver = new ComponentResolver({
+		rootDirectory: rootDir
+	});
+	const types = await resolver.getComponentTypes();
+	t.deepEqual(types, [
+		'atoms',
+		'helper'
+	]);
 	t.pass();
 });
 
