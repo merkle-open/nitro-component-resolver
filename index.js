@@ -4,6 +4,9 @@
  * Includes caching and parsing of pattern.json
  */
 'use strict';
+
+/* eslint-disable id-blacklist */
+
 const _ = require('lodash');
 const assert = require('assert');
 const path = require('path');
@@ -20,12 +23,12 @@ module.exports = function NitroComponentResolver(userOptions) {
 		patternExpression: '*/*/pattern.json',
 		// Optional renderer
 		exampleRenderer: (resolver, renderData) => renderData,
-		readmeRenderer: (resolver, renderData) => renderData,
+		readmeRenderer: (resolver, renderData) => renderData
 	}, userOptions);
 
 	const mainTemplate = new HotFileCache(options.mainTemplate, {
 		cwd: options.rootDirectory,
-		hot: options.watch,
+		hot: options.watch
 	});
 
 	const patternFiles = new HotFileCache(options.patternExpression, {
@@ -35,9 +38,9 @@ module.exports = function NitroComponentResolver(userOptions) {
 		 * Process the pattern.json files when load into the file cache
 		 */
 		fileProcessor: (filepath, fileContent) => {
-			let data;
+			let jsonData;
 			try {
-				data = JSON.parse(fileContent.toString());
+				jsonData = JSON.parse(fileContent.toString());
 			} catch (e) {
 				throw new Error(`Failed to parse "${filepath}" ${e}`);
 			}
@@ -49,7 +52,7 @@ module.exports = function NitroComponentResolver(userOptions) {
 				path: componentPath,
 				type: componentPathParts[0],
 				name: componentPathParts[1],
-				data
+				data: jsonData
 			};
 		}
 	});
@@ -68,7 +71,7 @@ module.exports = function NitroComponentResolver(userOptions) {
 				filepath,
 				name: exampleName,
 				content: fileContent.toString(),
-				hidden: path.basename(filepath).substr(0, 1) === '_'
+				main: path.basename(filepath).substr(0, 1) !== '_'
 			}));
 		}
 	});

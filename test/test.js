@@ -1,4 +1,4 @@
-/* eslint max-len: off, quotes:off, no-param-reassign: off */
+/* eslint-disable id-blacklist, arrow-parens */
 import test from 'ava';
 import path from 'path';
 import denodeify from 'denodeify';
@@ -100,12 +100,12 @@ test('should list examples', async t => {
 		name: '_hidden',
 		filepath: path.resolve(buttonDirectory, '_example/_hidden.hbs'),
 		content: 'This example should not be deployed',
-		hidden: true
+		main: false
 	}, {
 		name: 'example',
 		filepath: path.resolve(buttonDirectory, '_example/example.hbs'),
 		content: 'Hello World',
-		hidden: false
+		main: true
 	}]);
 	t.pass();
 });
