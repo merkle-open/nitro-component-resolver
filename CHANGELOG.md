@@ -1,6 +1,11 @@
 Change History
 ==============
 
+v0.0.7
+------
+* replace example property hidden with main
+* update dependencies
+
 v0.0.6
 ----
 * Remove `example` and `readme` option
