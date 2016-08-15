@@ -38,6 +38,7 @@
     "denodeify": "^1.2.1",
     "escape-string-regexp": "^1.0.5",
     "eslint": "^3.3.0",
+    "eslint-plugin-import": "^1.10.2",
     "mkdirp": "^0.5.1",
     "ncp": "^2.0.0",
     "npm-run-all": "^2.3.0",
