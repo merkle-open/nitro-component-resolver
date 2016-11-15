@@ -34,7 +34,7 @@ module.exports = function NitroComponentResolver(userOptions) {
 
 	const subTemplate = new HotFileCache(options.subTemplate, {
 		cwd: options.rootDirectory,
-		hot: options.watch,
+		hot: options.watch
 	});
 
 	const patternFiles = new HotFileCache(options.patternExpression, {
