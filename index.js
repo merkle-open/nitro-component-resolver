@@ -34,8 +34,19 @@ module.exports = function NitroComponentResolver(userOptions) {
 
 	const subTemplate = new HotFileCache(options.subTemplate, {
 		cwd: options.rootDirectory,
-		hot: options.watch
+		hot: options.watch,
+		fileProcessor: (filepath, fileContent) => {
+			const elementName = path.basename(path.dirname(filepath));
+			// Render exmaple after the templates are initialized
+			return {
+				filepath,
+				name: elementName,
+				content: fileContent.toString()
+			};
+		}
 	});
+
+	const templatesInitialized = Promise.all([mainTemplate.getFiles(), subTemplate.getFiles()]);
 
 	const patternFiles = new HotFileCache(options.patternExpression, {
 		cwd: options.rootDirectory,
@@ -73,12 +84,14 @@ module.exports = function NitroComponentResolver(userOptions) {
 		 */
 		fileProcessor: (filepath, fileContent) => {
 			const exampleName = path.basename(filepath).replace(/\..+$/, '');
-			return Promise.resolve(options.exampleRenderer(this, {
-				filepath,
-				name: exampleName,
-				content: fileContent.toString(),
-				main: path.basename(filepath).substr(0, 1) !== '_'
-			}));
+			// Render exmaple after the templates are initialized
+			return templatesInitialized
+				.then(() => options.exampleRenderer(this, {
+					filepath,
+					name: exampleName,
+					content: fileContent.toString(),
+					main: path.basename(filepath).substr(0, 1) !== '_'
+				}));
 		}
 	});
 
@@ -179,7 +192,7 @@ module.exports = function NitroComponentResolver(userOptions) {
 
 	/**
 	 * @param {string} componentDirectory absolute unix path e.g. 'atoms/button'
-	 * @returns {Object} processed example object
+	 * @returns {{filepath: string, content: string}} processed example object
 	 * Returns an array of absolute filenames to the examples inside the given component directory
 	 */
 	this.getComponentExamples = function getComponentExamples(componentDirectory) {
@@ -191,6 +204,23 @@ module.exports = function NitroComponentResolver(userOptions) {
 				return Promise.all(_.sortedUniq(filenames)
 					.filter((filename) => filename.indexOf(exampleDirectory) === 0)
 					.map((filename) => exampleFiles.readFile(filename))
+				);
+			});
+	};
+
+	/**
+	 * @param {string} componentDirectory absolute unix path e.g. 'atoms/button'
+	 * @returns {{filepath: string, content: string}} processed example object
+	 * Returns an array of absolute filenames to the templates inside the given component directory
+	 */
+	this.getComponentSubTemplates = function getComponentSubTemplates(componentDirectory) {
+		// filter all sub templates for files which are in the sub template path
+		return subTemplate.getFiles()
+			.then((filenames) => {
+				filenames.sort();
+				return Promise.all(_.sortedUniq(filenames)
+					.filter((filename) => filename.indexOf(componentDirectory) === 0)
+					.map((filename) => subTemplate.readFile(filename))
 				);
 			});
 	};

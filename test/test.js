@@ -134,7 +134,7 @@ test('should return not readmde if no file exists', async t => {
 	t.pass();
 });
 
-test('should return readmde', async t => {
+test('should return readme', async t => {
 	const rootDir = await createTestEnvironment('valid');
 	const resolver = new ComponentResolver({
 		rootDirectory: rootDir,
@@ -146,6 +146,23 @@ test('should return readmde', async t => {
 		filepath: path.join(typographyDirectory, 'readme.md'),
 		content: 'Please read me!'
 	});
+	t.pass();
+});
+
+test('should return subtemplate', async t => {
+	const rootDir = await createTestEnvironment('valid');
+	const resolver = new ComponentResolver({
+		rootDirectory: rootDir,
+		readme: true
+	});
+	const gridDirectory = path.resolve(rootDir, 'helper/grid');
+	const subTemplates = await resolver.getComponentSubTemplates(gridDirectory);
+	const expected = [{
+		filepath: path.join(gridDirectory, 'elements', 'grid-row', 'grid-row.hbs'),
+		content: '// Element template',
+		name: 'grid-row'
+	}];
+	t.deepEqual(subTemplates, expected);
 	t.pass();
 });
 
@@ -256,7 +273,6 @@ test('should invalidate the example cache when changing a sub template', async t
 	await resolver.getComponentExamples(gridDirectory);
 	const examples = await resolver.getComponentExamples(gridDirectory);
 	t.is(examples[0].content, 1);
-	await sleep(100);
 	await resolver.getComponentExamples(gridDirectory);
 	await unlink(path.join(gridDirectory, 'elements', 'grid-row', 'grid-row.hbs'));
 	await sleep(200);
