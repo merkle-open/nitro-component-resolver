@@ -1,6 +1,6 @@
 {
   "name": "@namics/nitro-component-resolver",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "A helper to resolve and parse the nitro pattern structure and meta files",
   "main": "index.js",
   "scripts": {

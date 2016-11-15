@@ -1,4 +1,4 @@
-/* eslint-disable id-blacklist, arrow-parens */
+/* eslint-disable id-blacklist, arrow-parens, no-param-reassign */
 import test from 'ava';
 import path from 'path';
 import denodeify from 'denodeify';
@@ -234,6 +234,31 @@ test('should invalidate the example cache when changing the main template', asyn
 	t.is(examples[0].content, 1);
 	await resolver.getComponentExamples(gridDirectory);
 	await unlink(path.join(gridDirectory, 'grid.hbs'));
+	await sleep(200);
+	const examples2 = await resolver.getComponentExamples(gridDirectory);
+	t.is(examples2[0].content, 2);
+	t.pass();
+});
+
+test('should invalidate the example cache when changing a sub template', async t => {
+	const rootDir = await createTestEnvironment('valid');
+	let renderIndex = 0;
+	const resolver = new ComponentResolver({
+		rootDirectory: rootDir,
+		readme: true,
+		examples: true,
+		exampleRenderer: (resolverInstance, renderData) => {
+			renderData.content = ++renderIndex;
+			return renderData;
+		}
+	});
+	const gridDirectory = path.resolve(rootDir, 'helper/grid');
+	await resolver.getComponentExamples(gridDirectory);
+	const examples = await resolver.getComponentExamples(gridDirectory);
+	t.is(examples[0].content, 1);
+	await sleep(100);
+	await resolver.getComponentExamples(gridDirectory);
+	await unlink(path.join(gridDirectory, 'elements', 'grid-row', 'grid-row.hbs'));
 	await sleep(200);
 	const examples2 = await resolver.getComponentExamples(gridDirectory);
 	t.is(examples2[0].content, 2);

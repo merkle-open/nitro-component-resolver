@@ -20,6 +20,7 @@ module.exports = function NitroComponentResolver(userOptions) {
 		cacheExamples: true,
 		exampleFolderName: '_example',
 		mainTemplate: '*/*/*.hbs',
+		subTemplate: '*/*/elements/*/*.hbs',
 		patternExpression: '*/*/pattern.json',
 		// Optional renderer
 		exampleRenderer: (resolver, renderData) => renderData,
@@ -29,6 +30,11 @@ module.exports = function NitroComponentResolver(userOptions) {
 	const mainTemplate = new HotFileCache(options.mainTemplate, {
 		cwd: options.rootDirectory,
 		hot: options.watch
+	});
+
+	const subTemplate = new HotFileCache(options.subTemplate, {
+		cwd: options.rootDirectory,
+		hot: options.watch,
 	});
 
 	const patternFiles = new HotFileCache(options.patternExpression, {
@@ -98,6 +104,8 @@ module.exports = function NitroComponentResolver(userOptions) {
 	patternFiles.on('all', () => exampleFiles.invalidateEntireCache());
 	// Auto invalidate examples if the main template changed
 	mainTemplate.on('all', () => exampleFiles.invalidateEntireCache());
+	// Auto invalidate examples if the sub template changed
+	subTemplate.on('all', () => exampleFiles.invalidateEntireCache());
 
 	/**
 	 * @returns {Array} a key value pair list for all parsed pattern.json files:

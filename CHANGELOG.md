@@ -1,6 +1,10 @@
 Change History
 ==============
 
+v0.0.8
+------
+* invalidate cache on subtemplate change
+
 v0.0.7
 ------
 * replace example property hidden with main
