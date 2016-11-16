@@ -24,12 +24,12 @@ module.exports = function NitroComponentResolver(userOptions) {
 		patternExpression: '*/*/pattern.json',
 		// Optional renderer
 		exampleRenderer: (resolver, renderData) => renderData,
-		readmeRenderer: (resolver, renderData) => renderData
+		readmeRenderer: (resolver, renderData) => renderData,
 	}, userOptions);
 
 	const mainTemplate = new HotFileCache(options.mainTemplate, {
 		cwd: options.rootDirectory,
-		hot: options.watch
+		hot: options.watch,
 	});
 
 	const subTemplate = new HotFileCache(options.subTemplate, {
@@ -41,9 +41,9 @@ module.exports = function NitroComponentResolver(userOptions) {
 			return {
 				filepath,
 				name: elementName,
-				content: fileContent.toString()
+				content: fileContent.toString(),
 			};
-		}
+		},
 	});
 
 	const templatesInitialized = Promise.all([mainTemplate.getFiles(), subTemplate.getFiles()]);
@@ -69,9 +69,9 @@ module.exports = function NitroComponentResolver(userOptions) {
 				path: componentPath,
 				type: componentPathParts[0],
 				name: componentPathParts[1],
-				data: jsonData
+				data: jsonData,
 			};
-		}
+		},
 	});
 
 	// Search for examples inside the project
@@ -90,9 +90,9 @@ module.exports = function NitroComponentResolver(userOptions) {
 					filepath,
 					name: exampleName,
 					content: fileContent.toString(),
-					main: path.basename(filepath).substr(0, 1) !== '_'
+					main: path.basename(filepath).substr(0, 1) !== '_',
 				}));
-		}
+		},
 	});
 
 	// Readme files
@@ -105,8 +105,8 @@ module.exports = function NitroComponentResolver(userOptions) {
 		fileProcessor: (filepath, fileContent) =>
 			Promise.resolve(options.readmeRenderer(this, {
 				filepath,
-				content: fileContent.toString()
-			}))
+				content: fileContent.toString(),
+			})),
 	});
 
 	// Auto invalidation of readmes if an example changes
@@ -210,7 +210,7 @@ module.exports = function NitroComponentResolver(userOptions) {
 
 	/**
 	 * @param {string} componentDirectory absolute unix path e.g. 'atoms/button'
-	 * @returns {{filepath: string, content: string}} processed example object
+	 * @returns {{filepath: string, content: string, name: string}} processed example object
 	 * Returns an array of absolute filenames to the templates inside the given component directory
 	 */
 	this.getComponentSubTemplates = function getComponentSubTemplates(componentDirectory) {
